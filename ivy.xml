@@ -1,0 +1,19 @@
+<ivy-module version="2.0">
+    <info organisation="org.apache" module="WebProject" />
+
+    <configurations>
+        <conf name="compile" description="compile dependencies"/>
+        <conf name="runtime" description="runtime dependencies" extends="compile"/>
+        <conf name="test"    description="test dependencies" extends="runtime"/>
+    </configurations>
+
+    <dependencies>
+        <dependency org="javax.mvc" name="javax.mvc-api" rev="1.0.0" conf="compile->default"/>
+        <dependency org="javax.faces" name="javax.faces-api" rev="2.3" conf="compile->default"/>
+        <dependency org="javax.servlet" name="javax.servlet-api" rev="4.0.1" conf="compile->default"/>
+        <dependency org="mysql" name="mysql-connector-java" rev="8.0.27" conf="compile->default"/>
+        <dependency org="org.apache.taglibs" name="taglibs-standard-spec" rev="1.2.5" conf="compile->default"/>
+        <dependency org="org.apache.taglibs" name="taglibs-standard-impl" rev="1.2.5" conf="compile->default"/>
+    </dependencies>
+
+</ivy-module>
