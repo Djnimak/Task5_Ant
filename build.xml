@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns:ivy="antlib:org.apache.ivy.ant" basedir="." name="ant_task" default="deploy">
+    <description>
+        Create war file and start the application with Ant build scripta
+    </description>
+
+    <!-- INSTRUCTIONS
+    1. Make sure you have set your CATALINA_HOME environmental variable
+    2. Got to task "run_server and change the file to start the server to the one corresponding to your OS"
+    -->
+    <property file="build.properties"/>
+    <property environment="env"/>
+    <property name="TOMCAT_HOME" value="${env.CATALINA_HOME}"/>
+    <property name="TOMCAT_HOME.bin" value="${TOMCAT_HOME}/bin"/>
+    <property name="project.deploy.location" value="${TOMCAT_HOME}/webapps"/>
+    <property name="war.dir" value="${project.deploy.location}/${ant.project.name}"/>
+
+
+    <path id="classpath.lib">
+        <fileset dir="${project.lib.dir}" includes="*.jar"/>
+    </path>
+
+    <target name="clean" description="clean up">
+        <delete dir="${project.classes.dir}" />
+        <delete dir="${project.build.dir}"/>
+        <delete file="${project.war}" />
+    </target>
+
+    <target name="ivy" description="Install ivy" depends="clean">
+        <mkdir dir="${ivy.dir}" />
+        <get dest="${ivy.file}"
+             src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.0-rc1/ivy-2.5.0-rc1.jar" />
+    </target>
+
+    <target name="resolve" description="retrieve dependencies with ivy" depends="ivy">
+        <echo message="Getting dependencies..." />
+        <ivy:retrieve />
+        <ivy:cachepath pathid="compile.path" conf="compile" />
+        <ivy:cachepath pathid="runtime.path" conf="runtime" />
+        <ivy:cachepath pathid="test.path" conf="test" />
+
+    </target>
+
+    <target name="init" depends="resolve">
+        <mkdir dir="${project.classes.dir}"/>
+
+        <copy includeemptydirs="false" todir="${project.classes.dir}">
+            <fileset dir="${project.web.dir}">
+                <exclude name="**/*.jar"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="build" depends="init">
+        <javac destdir="${project.classes.dir}" includeantruntime="false">
+            <src path="${scr.path}"/>
+            <classpath refid="classpath.lib"/>
+        </javac>
+    </target>
+
+    <target name="package" depends="build" >
+        <war destfile="${project.war}" index="true" needxmlfile="false">
+            <classes dir="${project.classes.dir}"/>
+            <lib dir="${project.lib.dir}"/>
+            <fileset dir="${project.web.dir}">
+                <include name="**/*.*"/>
+            </fileset>
+        </war>
+    </target>
+
+    <target name="copy_war" depends="package">
+        <copy file="${project.war}" todir="${project.deploy.location}"/>
+    </target>
+
+    <target name="run_server" depends="copy_war">
+        <exec executable="cmd" dir="${TOMCAT_HOME.bin}" os="${os.name}">
+            <!-- Change the file to start the server to the one corresponding to your OS-->
+            <arg line="/c startup.bat"/>
+        </exec>
+
+    </target>
+
+    <target name="wait" depends="run_server">
+        <sleep seconds="10"/>
+    </target>
+
+    <target name="run" depends="wait">
+        <exec executable="cmd" os="${os.name}">
+            <arg line="/c start http://localhost:8080/${ant.project.name}/"/>
+        </exec>
+    </target>
+
+    <target name="clean_up" depends="run">
+        <delete dir="${project.classes.dir}" />
+        <delete dir="${project.build.dir}"/>
+        <delete file="${project.war}" />
+    </target>
+
+    <target name="deploy" depends="clean_up"/>
+
+    <!-- SHUTDOWN -->
+
+    <target name="shutdown_server">
+        <exec executable="cmd" dir="${TOMCAT_HOME.bin}" os="${os.name}">
+            <!-- Change the file to start the server to the one corresponding to your OS-->
+            <arg line="/c shutdown.bat"/>
+        </exec>
+    </target>
+
+    <target name="delete_war" depends="shutdown_server">
+        <delete dir="${war.dir}"/>
+        <delete file="${project.deploy.location}/${ant.project.name}.war"/>
+    </target>
+
+</project>
